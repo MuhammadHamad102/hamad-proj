@@ -1,20 +1,14 @@
 import type { Request, Response } from "express";
-import { supabase } from "../supabase";
+import { asc } from "drizzle-orm";
+import { db } from "../index"
+import { cards } from "../db/schema";
 
 export const getCards = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
-      .from("dashboard_cards")
-      .select("*")
-      .order("id", { ascending: true });
-
-    if (error) {
-      console.error("Database error:", error.message);
-      return res.status(500).json({
-        success: false,
-        error: error.message,
-      });
-    }
+    const data = await db
+      .select()
+      .from(cards)
+      .orderBy(asc(cards.id));
 
     if (!data || data.length === 0) {
       return res.status(404).json({
@@ -28,11 +22,12 @@ export const getCards = async (req: Request, res: Response) => {
       success: true,
       cards: data,
     });
-  } catch (err) {
-    console.error("Unexpected error:", err);
+  } catch (err: any) {
+    console.error("Database error:", err.message || err);
+
     res.status(500).json({
       success: false,
-      error: "Internal server error",
+      error: err.message || "Internal server error",
     });
   }
 };

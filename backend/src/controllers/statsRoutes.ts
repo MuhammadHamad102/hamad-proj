@@ -1,17 +1,10 @@
 import type { Request, Response } from "express";
-import { supabase } from "../supabase";
+import { db } from "../index";
+import { charts } from "../db/schema";
 
 export const getStats = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase.from("chart_data").select("*");
-
-    if (error) {
-      console.error("Database error:", error.message);
-      return res.status(500).json({ 
-        success: false,
-        error: error.message 
-      });
-    }
+    const data = await db.select().from(charts);
 
     if (!data || data.length === 0) {
       console.log("No data found");
@@ -19,7 +12,7 @@ export const getStats = async (req: Request, res: Response) => {
         success: false,
         message: "No data is here",
         data: [],
-        series: []
+        series: [],
       });
     }
 
@@ -41,11 +34,11 @@ export const getStats = async (req: Request, res: Response) => {
     console.log(`Fetched ${data.length} records`);
     res.json(formattedData);
 
-  } catch (err) {
-    console.error("Unexpected error:", err);
+  } catch (err: any) {
+    console.error("Database error:", err.message || err);
     res.status(500).json({
       success: false,
-      error: "Internal server error"
+      error: err.message || "Internal server error",
     });
   }
 };
